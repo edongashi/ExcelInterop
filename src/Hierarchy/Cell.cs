@@ -21,7 +21,7 @@ namespace ExcelInterop
             get
             {
                 AssertNotDisposed();
-                Excel.Range _cell = Parent._Cells[row + 1, column + 1];
+                Excel.Range _cell = Parent._cells[row + 1, column + 1];
                 string text = _cell.Text;
                 Marshal.ReleaseComObject(_cell);
                 return text;
@@ -29,7 +29,7 @@ namespace ExcelInterop
             set
             {
                 AssertNotDisposed();
-                Excel.Range _cell = Parent._Cells[row + 1, column + 1];
+                Excel.Range _cell = Parent._cells[row + 1, column + 1];
                 _cell.Value2 = value;
                 Marshal.ReleaseComObject(_cell);
             }
@@ -40,7 +40,7 @@ namespace ExcelInterop
             get
             {
                 AssertNotDisposed();
-                Excel.Range _cell = Parent._Cells[row + 1, column + 1];
+                Excel.Range _cell = Parent._cells[row + 1, column + 1];
                 bool isMerged = _cell.MergeCells;
                 Marshal.ReleaseComObject(_cell);
                 return isMerged;

@@ -12,7 +12,7 @@ namespace ExcelInterop
         int StartColumn { get; }
         int StartRow { get; }
         int Width { get; }
-        
+
         void CopyToLocation(int targetRow, int targetColumn);
         void CopyToLocation(IWorksheet targetWorksheet, int targetRow, int targetColumn);
         void Delete(DeleteShiftDirection deleteShiftDirection);
@@ -28,7 +28,9 @@ namespace ExcelInterop
         void SetBorder(BorderCollection borders);
         void SetBorder(BorderThickness leftBorderThickness, BorderThickness topBorderThickness, BorderThickness rightBorderThickness, BorderThickness bottomBorderThickness);
         void SetFontColor(Color color);
+        void SetTopBorderColor(Color color);
         void SetHorizontalBorderColor(Color color);
+        void SetTopAndHorizontalBorderColor(Color color);
         void Shift(int rowOffset, int columnOffset);
     }
 }

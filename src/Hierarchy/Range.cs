@@ -42,7 +42,7 @@ namespace ExcelInterop
             }
         }
 
-        public ICell Cells(int row, int column)
+        public ICell Cell(int row, int column)
         {
             AssertNotDisposed();
             if (row < 0 || column < 0)
@@ -132,6 +132,18 @@ namespace ExcelInterop
             Marshal.ReleaseComObject(_range);
         }
 
+        public void SetTopBorderColor(Color color)
+        {
+            Excel.Range _range = _GetRange();
+            Excel.Borders _borders = _range.Borders;
+            Excel.Border _border = _borders[Excel.XlBordersIndex.xlEdgeTop];
+            var oleColor = ColorTranslator.ToOle(color);
+            _border.Color = oleColor;
+            Marshal.ReleaseComObject(_border);
+            Marshal.ReleaseComObject(_borders);
+            Marshal.ReleaseComObject(_range);
+        }
+
         public void SetHorizontalBorderColor(Color color)
         {
             Excel.Range _range = _GetRange();
@@ -140,6 +152,21 @@ namespace ExcelInterop
             var oleColor = ColorTranslator.ToOle(color);
             _border.Color = oleColor;
             Marshal.ReleaseComObject(_border);
+            Marshal.ReleaseComObject(_borders);
+            Marshal.ReleaseComObject(_range);
+        }
+
+        public void SetTopAndHorizontalBorderColor(Color color)
+        {
+            Excel.Range _range = _GetRange();
+            Excel.Borders _borders = _range.Borders;
+            Excel.Border _borderTop = _borders[Excel.XlBordersIndex.xlEdgeTop];
+            Excel.Border _borderHorizontal = _borders[Excel.XlBordersIndex.xlInsideHorizontal];
+            var oleColor = ColorTranslator.ToOle(color);
+            _borderTop.Color = oleColor;
+            _borderHorizontal.Color = oleColor;
+            Marshal.ReleaseComObject(_borderHorizontal);
+            Marshal.ReleaseComObject(_borderTop);
             Marshal.ReleaseComObject(_borders);
             Marshal.ReleaseComObject(_range);
         }
@@ -266,7 +293,7 @@ namespace ExcelInterop
         {
             if (startRow < 0 || startColumn < 0)
             {
-                throw new ArgumentOutOfRangeException();
+                return null;
             }
 
             if (width == 0 || height == 0)
@@ -281,7 +308,7 @@ namespace ExcelInterop
 
             if (subStartRow > this.EndRow || subStartCol > this.EndColumn)
             {
-                throw new ArgumentOutOfRangeException();
+                return null;
             }
 
             if (height < 0 || subEndRow > this.EndRow)
@@ -315,13 +342,13 @@ namespace ExcelInterop
         {
             AssertNotDisposed();
             Excel.Range _range = _GetRange();
-            _range.MergeCells = true;
+            _range.Merge();
             Marshal.ReleaseComObject(_range);
         }
 
         private Excel.Range _GetRange()
         {
-            Excel.Range _cells = Parent._Cells;
+            Excel.Range _cells = Parent._cells;
             Excel.Range _startRange = _cells[StartRow + 1, StartColumn + 1];
             Excel.Range _endRange = _cells[EndRow + 1, EndColumn + 1];
             Excel.Range _range = _cells.Range[_startRange, _endRange];
