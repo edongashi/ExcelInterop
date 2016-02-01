@@ -6,37 +6,47 @@ namespace ExcelInterop
 {
     public class Worksheet : IDisposable, IWorksheet
     {
-        // Interop
-        private Excel.Range _cells;
-        private Excel.Application _excel;
-        private Excel.Worksheet _worksheet;
-        private bool displayGridlines;
+        // Self
+        internal Excel.Worksheet _worksheet;
+        internal Excel.Range _cells;
+        //
 
-        // Data
         private ObjectDisposedCallback disposeCallback;
 
         // State
+        private bool displayGridlines;
         private bool disposed;
 
-        internal Worksheet(Excel.Worksheet _worksheet, Workbook parent, ObjectDisposedCallback disposeCallback,
-            Excel.Application _excel)
+        internal Worksheet(
+            ExcelApplication excel,
+            Workbook workbook,
+            Excel.Worksheet _worksheet,
+            ObjectDisposedCallback disposeCallback,
+            bool displayGridLines)
         {
+            this.ExcelApplication = excel;
+            this.Workbook = workbook;
             this._worksheet = _worksheet;
-            this.Parent = parent;
             this._cells = _worksheet.Cells;
             this.disposeCallback = disposeCallback;
-            this._excel = _excel;
             this.Name = _worksheet.Name;
-            this.displayGridlines = true;
+            DisplayGridlines = displayGridLines;
         }
 
-        public Workbook Parent { get; private set; }
+        public ExcelApplication ExcelApplication { get; private set; }
+
+        public Workbook Workbook { get; }
+
+        IWorkbook IWorksheet.Workbook => Workbook;
 
         public string Name { get; private set; }
 
         public bool IsDisposed => disposed;
 
-        internal Excel.Range _Cells => _cells;
+        public IWorksheet Clone()
+        {
+            return Workbook.CloneWorksheet(this);
+        }
 
         public bool DisplayGridlines
         {
@@ -48,14 +58,11 @@ namespace ExcelInterop
             set
             {
                 AssertNotDisposed();
-                if (value != displayGridlines)
-                {
-                    _worksheet.Activate();
-                    Excel.Window activeWindow = _excel.ActiveWindow;
-                    activeWindow.DisplayGridlines = value;
-                    Marshal.ReleaseComObject(activeWindow);
-                    displayGridlines = value;
-                }
+                _worksheet.Activate();
+                Excel.Window activeWindow = ExcelApplication._excel.ActiveWindow;
+                activeWindow.DisplayGridlines = value;
+                Marshal.ReleaseComObject(activeWindow);
+                displayGridlines = value;
             }
         }
 
@@ -73,7 +80,7 @@ namespace ExcelInterop
             }
         }
 
-        public ICell Cells(int row, int column)
+        public ICell Cell(int row, int column)
         {
             AssertNotDisposed();
             if (row < 0 || column < 0)
@@ -119,16 +126,12 @@ namespace ExcelInterop
             AssertNotDisposed();
             if (startRow > endRow)
             {
-                var temp = endRow;
-                endRow = startRow;
-                startRow = temp;
+                return null;
             }
 
             if (startColumn > endColumn)
             {
-                var temp = endColumn;
-                endColumn = startColumn;
-                startColumn = temp;
+                return null;
             }
 
             if (startRow < 0 || startColumn < 0)

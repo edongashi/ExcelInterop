@@ -1,4 +1,6 @@
-﻿namespace ExcelInterop
+﻿using System.Drawing;
+
+namespace ExcelInterop
 {
     public interface IRowRange : ICellContainer
     {
@@ -6,7 +8,10 @@
         bool IsEmpty { get; set; }
         int StartRow { get; }
         int Height { get; }
-        
+        string FontName { get; set; }
+        int FontSize { get; set; }
+        double RowHeight { get; set; }
+        void SetBackColor(Color color);
         void CopyToLocation(int targetRow);
         void CopyToLocation(IWorksheet targetWorksheet, int targetRow);
         void Delete();

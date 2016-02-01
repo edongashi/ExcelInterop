@@ -8,11 +8,13 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelInterop
 {
-    public class ExcelApplication : IDisposable
+    public class ExcelApplication : IDisposable, IExcelApplication
     {
-        // Interop
-        private Excel.Application _excel;
-        private Excel.Workbooks _workbooks;
+        // Self
+        internal Excel.Application _excel;
+        internal Excel.Workbooks _workbooks;
+        //
+
         private ObjectDisposedCallback disposeCallback;
 
         // State
@@ -21,9 +23,9 @@ namespace ExcelInterop
         private bool started;
 
         // Data
-        private List<Workbook> workbooks;
+        private List<IWorkbook> workbooks;
 
-        public ReadOnlyCollection<Workbook> Workbooks => workbooks?.AsReadOnly();
+        public ReadOnlyCollection<IWorkbook> Workbooks => workbooks?.AsReadOnly();
 
         public bool IsDisposed => disposed;
 
@@ -34,6 +36,11 @@ namespace ExcelInterop
             Dispose(true);
             OnExit(ExitCause.Disposed);
             GC.SuppressFinalize(this);
+        }
+
+        public void Close()
+        {
+            Dispose();
         }
 
         ~ExcelApplication()
@@ -55,7 +62,7 @@ namespace ExcelInterop
                 int count = workbooks.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    workbooks[0].Dispose();
+                    workbooks[0].Close(false);
                 }
 
                 workbooks = null;
@@ -109,8 +116,16 @@ namespace ExcelInterop
                 throw new InvalidOperationException("ExcelApplication instance is not running.");
             }
         }
+        
+        public IWorkbook NewWorkbook()
+        {
+            AssertStarted();
+            var workbook = new Workbook(this, _workbooks.Add(), null, disposeCallback);
+            workbooks.Add(workbook);
+            return workbook;
+        }
 
-        public Workbook Open(string filePath)
+        public IWorkbook Open(string filePath)
         {
             AssertStarted();
             if (string.IsNullOrWhiteSpace(filePath))
@@ -123,7 +138,7 @@ namespace ExcelInterop
             {
                 try
                 {
-                    workbook = new Workbook(filePath, _workbooks.Open(filePath), disposeCallback, _excel);
+                    workbook = new Workbook(this, _workbooks.Open(filePath), filePath, disposeCallback);
                     workbooks.Add(workbook);
                 }
                 catch (Exception e)
@@ -137,10 +152,10 @@ namespace ExcelInterop
 
         public void Start()
         {
-            Start(false, false);
+            Start(true, false, false);
         }
 
-        public void Start(bool displayAlerts, bool ignoreRemoteRequests)
+        public void Start(bool visible, bool displayAlerts, bool ignoreRemoteRequests)
         {
             AssertNotDisposed();
             if (started)
@@ -171,11 +186,12 @@ namespace ExcelInterop
                 }
             };
 
+            _excel.Visible = true;
             _excel.DisplayAlerts = displayAlerts;
             _excel.IgnoreRemoteRequests = ignoreRemoteRequests;
 
             _workbooks = _excel.Workbooks;
-            workbooks = new List<Workbook>();
+            workbooks = new List<IWorkbook>();
             disposeCallback = sender => workbooks.Remove((Workbook)sender);
             started = true;
         }
